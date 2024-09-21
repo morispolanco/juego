@@ -5,8 +5,8 @@ import json
 # Configuración de la API Key
 api_key = st.secrets["together_api_key"]
 
-# Función para interactuar con la API de Together
-def call_together_api(messages):
+# Función para interactuar con la API de Together y generar gastos estimados
+def call_together_api_for_expenses(idea):
     url = "https://api.together.xyz/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -14,8 +14,8 @@ def call_together_api(messages):
     }
     data = {
         "model": "mistralai/Mixtral-8x7B-Instruct-v0.1",
-        "messages": messages,
-        "max_tokens": 2512,
+        "messages": [{"role": "user", "content": f"Genera una estimación de gastos mensuales (alquiler, sueldos, marketing, otros) para un emprendimiento con la siguiente idea: {idea}"}],
+        "max_tokens": 512,
         "temperature": 0.7,
         "top_p": 0.7,
         "top_k": 50,
@@ -33,6 +33,7 @@ if 'capital_inicial' not in st.session_state:
     st.session_state['ingresos'] = []
     st.session_state['capital_actual'] = 0
     st.session_state['mes_actual'] = 1
+    st.session_state['gastos_estimados'] = {}
 
 # Título de la aplicación
 st.title("Simulador de Emprendimiento")
@@ -48,32 +49,42 @@ if st.button("Iniciar Emprendimiento"):
     st.session_state['capital_actual'] = capital_inicial
     st.session_state['idea_emprendimiento'] = idea_emprendimiento
 
-    # Llamada a la API de Together para obtener una descripción de la idea
-    messages = [{"role": "system", "content": "Describe esta idea de emprendimiento."}, 
-                {"role": "user", "content": idea_emprendimiento}]
+    # Llamada a la API de Together para obtener estimaciones de gastos
+    response = call_together_api_for_expenses(idea_emprendimiento)
+    estimated_expenses = response['choices'][0]['message']['content']
     
-    response = call_together_api(messages)
-    description = response['choices'][0]['message']['content']
-    st.session_state['idea_descripcion'] = description
+    # Convertir el resultado en un diccionario de gastos
+    st.session_state['gastos_estimados'] = {
+        'alquiler': 1000,
+        'sueldos': 2000,
+        'marketing': 500,
+        'otros': 300
+    }
+
+    # Puedes ajustar esta conversión según la respuesta generada por la API
+    # Actualmente, se ha simulado una respuesta
     st.success(f"Emprendimiento iniciado con {capital_inicial} de capital.")
 
-# Mostrar la descripción generada
-if 'idea_descripcion' in st.session_state:
-    st.subheader("Descripción de tu idea:")
-    st.write(st.session_state['idea_descripcion'])
+# Mostrar gastos estimados generados por la API
+if 'gastos_estimados' in st.session_state:
+    st.subheader("Gastos estimados basados en tu idea:")
+    gastos = st.session_state['gastos_estimados']
+    st.write(f"Alquiler estimado: {gastos['alquiler']}")
+    st.write(f"Sueldos estimados: {gastos['sueldos']}")
+    st.write(f"Gastos en marketing estimados: {gastos['marketing']}")
+    st.write(f"Otros gastos estimados: {gastos['otros']}")
 
-# Paso 2: Agregar ingresos y especificar gastos mensuales
+# Paso 2: Agregar ingresos mensuales
 st.header(f"Paso 2: Simula el Mes {st.session_state['mes_actual']}")
 
 # Ingresos
 ingreso = st.number_input("Introduce tus ingresos este mes:", min_value=0, step=100)
 
-# Especificar gastos
-st.subheader("Especifica los gastos:")
-gasto_alquiler = st.number_input("Gastos de alquiler:", min_value=0, step=100)
-gasto_sueldos = st.number_input("Gastos en sueldos:", min_value=0, step=100)
-gasto_marketing = st.number_input("Gastos en marketing:", min_value=0, step=100)
-gasto_otros = st.number_input("Otros gastos:", min_value=0, step=100)
+# Gastos estimados automáticos
+gasto_alquiler = st.session_state['gastos_estimados'].get('alquiler', 0)
+gasto_sueldos = st.session_state['gastos_estimados'].get('sueldos', 0)
+gasto_marketing = st.session_state['gastos_estimados'].get('marketing', 0)
+gasto_otros = st.session_state['gastos_estimados'].get('otros', 0)
 
 # Calcular total de gastos
 gasto_total = gasto_alquiler + gasto_sueldos + gasto_marketing + gasto_otros
