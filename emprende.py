@@ -26,14 +26,22 @@ def call_together_api_for_expenses(idea):
     response = requests.post(url, headers=headers, json=data)
     return response.json()
 
-# Inicializa los datos
+# Inicializa los datos si no están presentes
 if 'capital_inicial' not in st.session_state:
     st.session_state['capital_inicial'] = 0
     st.session_state['gastos'] = []
     st.session_state['ingresos'] = []
     st.session_state['capital_actual'] = 0
     st.session_state['mes_actual'] = 1
-    st.session_state['gastos_estimados'] = {}
+
+# Asegurarse de que la clave 'gastos_estimados' esté inicializada
+if 'gastos_estimados' not in st.session_state:
+    st.session_state['gastos_estimados'] = {
+        'alquiler': 0,
+        'sueldos': 0,
+        'marketing': 0,
+        'otros': 0
+    }
 
 # Título de la aplicación
 st.title("Simulador de Emprendimiento")
