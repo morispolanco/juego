@@ -69,8 +69,6 @@ if st.button("Iniciar Emprendimiento"):
         'otros': 300
     }
 
-    # Puedes ajustar esta conversión según la respuesta generada por la API
-    # Actualmente, se ha simulado una respuesta
     st.success(f"Emprendimiento iniciado con {capital_inicial} de capital.")
 
 # Mostrar gastos estimados generados por la API
@@ -97,6 +95,7 @@ gasto_otros = st.session_state['gastos_estimados'].get('otros', 0)
 # Calcular total de gastos
 gasto_total = gasto_alquiler + gasto_sueldos + gasto_marketing + gasto_otros
 
+# Botón para actualizar el mes
 if st.button("Actualizar Mes"):
     st.session_state['ingresos'].append(ingreso)
     st.session_state['gastos'].append({
@@ -108,10 +107,12 @@ if st.button("Actualizar Mes"):
         'total': gasto_total
     })
     st.session_state['capital_actual'] += (ingreso - gasto_total)
-    st.session_state['mes_actual'] += 1
 
     # Mostrar resultados
     st.success(f"Capital actualizado: {st.session_state['capital_actual']}")
+    
+    # Pasar al mes siguiente
+    st.session_state['mes_actual'] += 1
 
 # Paso 3: Mostrar resultados
 st.header("Resumen del Emprendimiento")
@@ -125,5 +126,6 @@ st.subheader("Gastos detallados por mes:")
 for gasto in st.session_state['gastos']:
     st.write(f"Mes {gasto['mes']}: Alquiler: {gasto['alquiler']}, Sueldos: {gasto['sueldos']}, Marketing: {gasto['marketing']}, Otros: {gasto['otros']}, Total: {gasto['total']}")
 
+# Verificar si el negocio ha quebrado
 if st.session_state['capital_actual'] <= 0:
     st.error("¡Has quebrado! El capital actual es 0 o negativo.")
